@@ -21,18 +21,16 @@ class QueueManager {
         $msg = new AMQPMessage(json_encode($data), ['delivery_mode' => 2]);
         $this->channel->basic_publish($msg, '', $queue);
     }
-
+    public function consume($queue, $callback) {
         $this->channel->basic_consume($queue, '', false, false, false, false, function($msg) use ($callback) {
             $data = json_decode($msg->body, true);
             try {
                 $callback($data);
-                $msg->ack();
+                $msg->ack(); 
             } catch (Exception $e) {
-
-                // штрафное задание
                 $this->publish($data, $this->errorQueue);
                 $msg->ack(); 
-                echo "Ошибка, заказ перенесен в очередь ошибок.\n";
+                echo "Ошибка! Заказ перенесен в очередь ошибок.\n";
             }
         });
 
